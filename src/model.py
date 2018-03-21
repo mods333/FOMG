@@ -16,7 +16,7 @@ import random
 
 # In[2]:
 
-use_cuda = False
+use_cuda = True
 vocabulary_size = 16*128*2 + 32*16 + 100 + 1 + 2  # 4708 + 1
 one_hot_embeddings = np.eye(vocabulary_size)
 

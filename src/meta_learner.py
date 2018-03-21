@@ -56,7 +56,7 @@ class Learner(nn.Module):
         loss = self.learner_net(query_x, numbered_seq)
 
         grads_pi = autograd.grad(
-            loss, self.learner_net.parameters(), create_graph=True, allow_unused=True)
+            loss, self.learner_net.parameters(), retain_graph=True, allow_unused=True)
 
         return loss, grads_pi, loss.data[0]
 
