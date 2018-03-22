@@ -69,6 +69,7 @@ class Dataset(object):
     def __init__(self, root, split, loader, metadata, split_proportions=(8,1,1),
             persist=True, cache=True, validate=True, min_songs=0, parallel=False):
         self.root = root
+        self.split = split
         self.cache = cache
         self.cache_data = {}
         self.loader = loader
@@ -171,6 +172,7 @@ class Dataset(object):
             song (str): the name of the song file. e.g. `"lateralus.txt"`
             artist (str): the name of the artist directory. e.g. `"tool"`
         """
+        print(artist, song)
         if self.cache and (artist, song) in self.cache_data:
             return self.cache_data[(artist, song)]
         else:

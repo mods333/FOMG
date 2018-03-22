@@ -6,7 +6,7 @@ import yaml
 
 import numpy as np
 
-from loaders import LyricsLoader, MIDILoader
+from loaders import MIDILoader
 from dataset import Dataset, Metadata
 
 
@@ -51,14 +51,14 @@ class EpisodeSampler(object):
         return len(self.data)
 
     def __repr__(self):
-        return 'EpisodeSampler("%s", "%s")' % (self.root, self.split)
+        return 'EpisodeSampler("%s", "%s")' % (self.dataset.root, self.dataset.split)
 
     def get_episode(self):
         support = np.zeros((self.batch_size, self.support_size, self.max_len), dtype=self.dtype)
         query = np.zeros((self.batch_size, self.query_size, self.max_len), dtype=self.dtype)
         artists = np.random.choice(self.dataset, size=self.batch_size, replace=False)
         for batch_index, artist in enumerate(artists):
-            support_songs, query_songs = self.sq_sampler.sample(artist)
+            query_songs, support_songs = self.sq_sampler.sample(artist)
             for support_index, song in enumerate(support_songs):
                 parsed_song = self.dataset.load(artist.name, song)
                 support[batch_index,support_index,:] = parsed_song
