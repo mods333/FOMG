@@ -3,6 +3,7 @@
 
 # In[1]:
 
+from common import *
 
 import torch
 from torch import nn
@@ -35,9 +36,10 @@ class EncoderLSTM(nn.Module):
         _, hidden_out = self.lstm(input, hidden_in)
         return hidden_out
 
-    def initHidden(self):
+    def initHidden(self, batch_size):
 
-        result = Variable(torch.zeros(1, 1, self.hidden_size)).double()
+        result = Variable(torch.zeros(
+            1, batch_size, self.hidden_size)).double()
 
         if use_cuda:
             result = result.cuda()
@@ -67,8 +69,9 @@ class DecoderLSTM(nn.Module):
         output = output.squeeze()
         return output.unsqueeze(0), hidden
 
-    def initHidden(self):
-        result = Variable(torch.zeros(1, 1, self.hidden_size)).double()
+    def initHidden(self, batch_size):
+        result = Variable(torch.zeros(
+            1, batch_size, self.hidden_size)).double()
         if use_cuda:
             return result.cuda()
         else:
@@ -150,7 +153,8 @@ class Model(nn.Module):
         sequence_length = seq_size[0]
         loss = 0
 
-        encoder_hidden = (encoder.initHidden(), encoder.initHidden())
+        encoder_hidden = (encoder.initHidden(batch_size),
+                          encoder.initHidden(batch_size))
 
         # Encoder is fed the flipped control sequence
         for index_control in np.arange(sequence_length-1, 0, -1):
@@ -159,9 +163,8 @@ class Model(nn.Module):
             encoder_hidden = encoder(encoder_input, encoder_hidden)
 
         # feed encoder_hidden
-        decoder_input = sequence[1].unsqueeze(0)  # One after SOS
+        decoder_input = sequence[0].unsqueeze(0)  # This is SOS
         decoder_hidden = encoder_hidden
-        predicted_note_index = 0
 
         # Prepare the results tensor
         # (seq_length, batch_size, vocab_size)
@@ -171,7 +174,7 @@ class Model(nn.Module):
 
         all_decoder_outputs[0] = decoder_input
 
-        for index_control in range(2, sequence_length):
+        for index_control in range(1, sequence_length):
             # decoder_input = decoder_input.view(1, 1, vocabulary_size)
             decoder_output, decoder_hidden = decoder(
                 decoder_input, decoder_hidden)
@@ -201,50 +204,61 @@ class Model(nn.Module):
         return loss
 
     def map_inference(self, sequence, embeddings=one_hot_embeddings, max_length=500):
-        """ sequence has to be batch_size=1"""
+        """
+        Input:
+            sequence: (seq_length, batch, vocab_size)
+            output: [[seq1], ..., [seqN]] where N is number of batch
+        """
         encoder = self.encoder
         decoder = self.decoder
 
-        output_control_sequence = []
+        # (seq_length, batch_size, vocab_size)
+        seq_size = sequence.size()
+        batch_size = seq_size[1]
+        sequence_length = seq_size[0]
 
-        # Encoder
-        encoder_hidden = self.hidden
+        encoder_hidden = (encoder.initHidden(batch_size),
+                          encoder.initHidden(batch_size))
 
-        sequence_length = sequence.size()[1]
-
+        # Encoder is fed the flipped control sequence
         for index_control in np.arange(sequence_length-1, 0, -1):
-            encoder_input = sequence[0][index_control].view(
-                1, 1, vocabulary_size)
-            # Gets hidden for next input
+            encoder_input = sequence[index_control].unsqueeze(
+                0)  # (1, batch_size, vocab_size)
             encoder_hidden = encoder(encoder_input, encoder_hidden)
 
-        # This point we have last encoder_hidden, feed into decoder
+        # feed encoder_hidden
+        decoder_input = sequence[0].unsqueeze(0)  # This is SOS
         decoder_hidden = encoder_hidden
-        decoder_input = sequence[0][0]
-        predicted_control_index = SOS_TOKEN
 
-        cur_length = 0
+        output_control_sequences = [[] for batch in range(batch_size)]
+        append_flag = [True for batch in range(batch_size)]
+        # Prepare the results tensor
+        # (seq_length, batch_size, vocab_size)
+        index_control = 1
         while True:
-            decoder_input = decoder_input.view(1, 1, vocabulary_size)
+            # decoder_input = decoder_input.view(1, 1, vocabulary_size)
             decoder_output, decoder_hidden = decoder(
                 decoder_input, decoder_hidden)
 
-            # MAP inference
             topv, topi = decoder_output.data.topk(1)
-            predicted_control_index = int(topi)
-            if predicted_control_index == EOS_TOKEN:
-                break
-            output_control_sequence.append(predicted_control_index)
 
-            # This is the next input
-            decoder_input = torch.from_numpy(
-                embeddings[predicted_control_index])
-            decoder_input = Variable(decoder_input).double()
+            next_input = []
+            for index, ni in enumerate(topi.squeeze()):
+                next_input.append(
+                    Variable(torch.DoubleTensor(one_hot_embeddings[ni])))
+                # If we hit an EOS, stop appending to that output sequence
+                if ni == EOS_TOKEN:
+                    append_flag[index] = False
+                if append_flag[index]:
+                    output_control_sequences[index].append(ni)
+
+            decoder_input = torch.stack(next_input).unsqueeze(0)
+
             if use_cuda:
                 decoder_input = decoder_input.cuda()
 
-            cur_length += 1
-            if cur_length >= max_length:
+            index_control += 1
+            if index_control >= max_length:
                 break
 
-        return output_control_sequence
+        return output_control_sequences
