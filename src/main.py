@@ -1,6 +1,6 @@
 from loaders import Loader, MIDILoader
 from model import Model
-from Meta_learner import MetaLearner
+from meta_learner import MetaLearner
 
 import numpy as np
 import torch
