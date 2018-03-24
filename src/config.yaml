@@ -1,0 +1,7 @@
+query_size: 5
+support_size: 10
+batch_size: 1
+max_len: 500
+dataset: midi
+dataset_path: ../data/freemidi_data
+split: train
