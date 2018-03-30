@@ -32,7 +32,7 @@ class Learner(nn.Module):
         self.meta_net = network_class(*args)
         self.learner_net = network_class(*args)
 
-        self.optimizer = torch.optim.SGD(self.learner_net.parameters(), 0.1)
+        self.optimizer = torch.optim.SGD(self.learner_net.parameters(), 0.01)
 
     def copy_theta(self):
 

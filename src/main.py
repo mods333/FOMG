@@ -11,7 +11,8 @@ from torch.autograd import Variable
 """ Init Models """
 _loader = Loader(502)  # 500 + SOS + EOS
 loader = MIDILoader(_loader)
-meta_learner = MetaLearner(Model, (vocabulary_size, encoding_size), 1, 0.01, 2)
+lr = 0.01
+meta_learner = MetaLearner(Model, (vocabulary_size,encoding_size,vocabulary_size,lr), 1, 0.01, 2)
 
 input_files = ['bach_846.mid', 'mz_311_1.mid', 'rac_op3_2.mid']
 input_variables = []
