@@ -1,4 +1,4 @@
-query_size: 5
+query_size: 1
 support_size: 10
 batch_size: 1
 max_len: 500
