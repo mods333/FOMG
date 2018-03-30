@@ -1,0 +1,7 @@
+query_size: 1
+support_size: 10
+batch_size: 1
+max_len: 500
+dataset: midi
+dataset_path: ../data/small
+split: train
