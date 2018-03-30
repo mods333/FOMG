@@ -37,9 +37,9 @@ for index, input_file in enumerate(input_files):
 original_sequences = np.array(original_sequences, dtype=np.int64)
 
 # (T_i, seq_length, batch_size, vocab_size)
-# accs = meta_learner(input_variables[0].view(
-#     1, 502, 1, vocabulary_size), input_variables[1].view(1, 502, 1, vocabulary_size), Variable(torch.from_numpy(original_sequences[0])).view(502, 1).cuda())
-# print(accs)
+accs = meta_learner(input_variables[0].view(
+    1, 502, 1, vocabulary_size), input_variables[1].view(1, 502, 1, vocabulary_size), Variable(torch.from_numpy(original_sequences[0])).view(502, 1).cuda())
+print(accs)
 
-print(meta_learner.learner.meta_net.map_inference(
-    input_variables[0][0:100].view(100, 1, vocabulary_size)))
+# print(meta_learner.learner.meta_net.map_inference(
+#     input_variables[0][0:100].view(100, 1, vocabulary_size)))
