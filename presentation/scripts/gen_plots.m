@@ -30,22 +30,22 @@ maml_3 = [2.7716 1.6416 1.3366 1.0999 0.8690 0.7099 0.5766 ...
 figure;
 subplot(1,3,1);
 hold on;
-plot(maml_1);
-plot(baseline_1);
+plot(maml_1, 'LineWidth',2);
+plot(baseline_1, 'LineWidth',2);
 legend('MAML', 'Baseline');
 ylabel('Loss','Interpreter','latex')
 
 subplot(1,3,2);
 hold on;
-plot(maml_2);
-plot(baseline_2);
+plot(maml_2, 'LineWidth',2);
+plot(baseline_2, 'LineWidth',2);
 legend('MAML', 'Baseline');
 xlabel('Iterations','Interpreter','latex')
 
 subplot(1,3,3);
 hold on;
-plot(maml_3);
-plot(baseline_3);
+plot(maml_3, 'LineWidth',2);
+plot(baseline_3, 'LineWidth',2);
 legend('MAML', 'Baseline');
 
 
