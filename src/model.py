@@ -14,10 +14,11 @@ from torch.nn import functional as F
 
 import numpy as np
 import random
+import torch.utils.data.sampler as sampler
 
 # In[2]:
 
-use_cuda = False
+use_cuda = True
 vocabulary_size = 16*128*2 + 32*16 + 100 + 1 + 2  # 4708 + 1
 one_hot_embeddings = np.eye(vocabulary_size)
 
@@ -52,6 +53,7 @@ class DecoderLSTM(nn.Module):
 
     def forward(self, input, hidden):
         output = F.relu(input)
+        #output = input
         output, hidden = self.lstm(output, hidden)
         output = self.out(output)
         return output[0], hidden
@@ -170,7 +172,7 @@ class Model(nn.Module):
         hidden = (decoder_output, encoder_hidden)
 
         pred_seqs = None
-        for i in range(500):
+        for i in range(150):
             decoder_input = Variable(torch.from_numpy(token_batch)).double()
             decoder_input = decoder_input.cuda() if use_cuda else decoder_input
             decoder_input = decoder_input.squeeze().view(1, batch_size, -1)
@@ -183,4 +185,55 @@ class Model(nn.Module):
                 pred_seqs = np.concatenate((pred_seqs, topi.cpu().numpy()), axis=1)
             token_batch = np.array(self.embeddings[topi])
 
+        return pred_seqs.tolist()
+        
+    def sample_inference(self, token_seqs):
+        softmax = nn.Softmax()
+        batch_size = len(token_seqs)
+        seq_len = len(token_seqs[0])
+        encoder_hidden = Variable(self.encoder.initHidden(batch_size)).double()
+        encoder_output = Variable(self.encoder.initHidden(batch_size)).double()
+        if use_cuda:
+            encoder_hidden = encoder_hidden.cuda()
+            encoder_output = encoder_output.cuda()
+        
+        hidden = (encoder_output, encoder_hidden)
+        for i in np.arange(seq_len-1, 0, -1):
+            token_batch = np.array(self.embeddings[token_seqs[:, i]])
+            encoder_input = Variable(torch.from_numpy(token_batch)).view(1, batch_size, -1).double()
+            encoder_input = encoder_input.cuda() if use_cuda else encoder_input
+            hidden = self.encoder(encoder_input, hidden)
+        
+        encoder_output, encoder_hidden = hidden
+            
+        token_batch = np.array(self.embeddings[[SOS_TOKEN]*batch_size])
+        decoder_output = Variable(self.decoder.initHidden(batch_size)).double()
+        if use_cuda:
+            decoder_output = decoder_output.cuda()
+        
+        hidden = (decoder_output, encoder_hidden)
+
+        pred_seqs = None
+        for i in range(250):
+            decoder_input = Variable(torch.from_numpy(token_batch)).double()
+            decoder_input = decoder_input.cuda() if use_cuda else decoder_input
+            decoder_input = decoder_input.squeeze().view(1, batch_size, -1)
+            decoder_output, hidden = self.decoder(decoder_input, hidden)
+            
+            output = softmax(decoder_output).data.cpu()
+            output = output.numpy()
+            output = output.tolist()
+
+            out_iter = sampler.WeightedRandomSampler(output,len(output))
+
+            for idx in out_iter:
+                ni = np.array([[idx]])
+                break
+
+            if pred_seqs is None:
+                pred_seqs = ni
+            else:
+                pred_seqs = np.concatenate((pred_seqs, ni), axis=1)
+            token_batch = np.array(self.embeddings[ni])
+            
         return pred_seqs.tolist()
