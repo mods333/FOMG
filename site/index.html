@@ -187,6 +187,7 @@
 			MIDI.Player.loadFile(filename)
 			var title = document.getElementById("title");
 			title.innerHTML = "Now playing: " + filename
+			pausePlayStop()
 		}
 
 		// Begin loading indication.
