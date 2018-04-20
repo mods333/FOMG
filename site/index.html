@@ -38,7 +38,7 @@
 	<h1>F(O)MG Demo</h1>
 	<div style="position: fixed; top: 0; left: 0; z-index: 4; overflow: hidden;" id="colors"></div>
 	<div style="text-align: center; position: absolute; top: -70px; left: -40px; opacity: 0.9" id="colors"></div>
-	<div style="margin: 0 auto 50px auto; border: 1px solid #000; background: rgba(255,255,255,0.5); border-radius: 11px; width: 800px; padding-bottom: 15px; position: relative; z-index: 2;">
+	<div style="margin: 0 auto 50px auto; border: 1px solid #000; background: rgba(255,255,255,0.5); border-radius: 11px; width: 800px; position: relative; z-index: 2;">
 		<div class="player" style="height: 42px; box-shadow: 0 -1px #000; margin-bottom: 0; border-bottom-right-radius: 0; border-bottom-left-radius: 0;">
 			<div style="margin: 0 auto; width: 160px; float: right;">
 				<input type="image" src="./images/play.png" align="absmiddle" value="pause" onclick="pausePlayStop()" id="pausePlayStop">
@@ -57,7 +57,10 @@
 		<div id="title" style="background: rgba(255,255,0,0.5); position: relative;color: #000; z-index: -1;padding: 5px 11px 5px;">Loading API...</div>
 	</div>
 	<div style="text-align: center;">
-		<button class="button--blue" onclick="chooseSong('best_maml.mid')">Best MAML</button>
+		<div style="margin-bottom: 10px;">
+			<button class="button--blue" onclick="chooseSong('best_maml.mid')">Best MAML</button>
+		</div>
+		<ul id="songslist" style="list-style-type: none; padding: 0; margin: 0 auto;"></ul>
 	</div>
 
 	<script type="text/javascript">
@@ -138,6 +141,7 @@
 					MIDIPlayerPercentage(player);
 				}
 			});
+			renderSongs();
 		});
 
 		var MIDIPlayerPercentage = function (player) {
@@ -184,11 +188,66 @@
 		};
 
 		var chooseSong = function (filename) {
-			MIDI.Player.loadFile(filename)
+			MIDI.Player.loadFile(filename, pausePlayStop)
 			var title = document.getElementById("title");
-			title.innerHTML = "Now playing: " + filename
-			pausePlayStop()
+			title.innerHTML = "Now playing: " + filename;
 		}
+
+		var renderSongs = function () {
+			var songs = [
+				'01_2.mid',
+				'01_3.mid',
+				'01_4.mid',
+				'02_4.mid',
+				'03_4.mid',
+				'04_1.mid',
+				'05_2.mid',
+				'06_2.mid',
+				'07_1.mid',
+				'07_3.mid',
+				'09_1.mid',
+				'09_2.mid',
+				'09_3.mid',
+				'09_4.mid',
+				'10_1.mid',
+				'11_1.mid',
+				'11_3.mid',
+				'13_4.mid',
+				'15_1.mid',
+				'16_1.mid',
+				'16_3.mid',
+				'17_1.mid',
+				'20_1.mid',
+				'20_2.mid',
+				'22_2.mid',
+				'24_1.mid',
+				'24_2.mid',
+				'24_4.mid',
+				'25_2.mid',
+				'25_3.mid',
+				'28_1.mid',
+				'30_4.mid'
+				
+			];
+			var types = ['input', 'baseline', 'mml'];
+			var songslist = document.getElementById("songslist");
+			songs.forEach((song) => {
+				var div = document.createElement("div");
+				types.forEach((type) => {
+					var songUrl = type + '_' + song;
+					var button = document.createElement('button');
+					button.className = 'button--blue';
+					button.innerHTML = songUrl.replace('.mid', '');
+					button.onclick = () => chooseSong('samples/' + songUrl);
+					button.style = "margin: 10px;"
+					div.appendChild(button);
+				})
+				songslist.appendChild(div);
+			});
+
+		}
+
+
 
 		// Begin loading indication.
 		var player;
