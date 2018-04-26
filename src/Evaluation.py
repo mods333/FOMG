@@ -317,13 +317,14 @@ class Model(nn.Module):
 
 # In[48]:
 
+import copy
 
 test_model = Model(vocabulary_size, encoding_size, vocabulary_size, learning_rate=lr)
 optimizer = torch.optim.Adam(test_model.parameters(), lr)
 
-N = 1 # 30 Artists
-num_updates = 20
-feed_length = 75
+N = 10 # 30 Artists
+num_updates = 100
+feed_length = 50
 for index in range(N):
     episode = eps.get_episode()
     support = episode.support
@@ -331,7 +332,7 @@ for index in range(N):
 
     for artist_index in range(support.shape[0]):
         """ Baseline """
-        test_model.load_state_dict(baseline.state_dict())
+        test_model.load_state_dict(copy.deepcopy(baseline.state_dict()))
         test_model.train()
         for _ in range(num_updates):
             # train for 10 iterations
@@ -353,11 +354,10 @@ for index in range(N):
                 gen_seq = test_model.sample_inference(np.array([song[:feed_length]]))
                 midi = loader.detokenize(np.append(song[:feed_length], np.array(gen_seq[0])))
                 midi.write('baseline_{}_{}_pred.mid'.format(index*3+artist_index+1, inf_index))
-                print('----')
             except:
                 print('Failed to generate: baseline_{}_{}'.format(index*3+artist_index+1, inf_index))
         """ MAML """
-        test_model.load_state_dict(meta_learner.learner.meta_net.state_dict())
+        test_model.load_state_dict(copy.deepcopy(meta_learner.learner.meta_net.state_dict()))
         test_model.train()
         for _ in range(num_updates):
             # train for 10 iterations
@@ -366,7 +366,7 @@ for index in range(N):
             loss.backward()
             optimizer.step()
         test_model.eval()
-        for inf_index in range(query[artist_index].shape[0]):
+        for inf_index in range(1, query[artist_index].shape[0]+1):
             try:
                 # Make inference for each song
                 song = query[artist_index][inf_index]
