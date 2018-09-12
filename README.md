@@ -1,4 +1,4 @@
-# FOMG
+# Few shot music generation
 Deep neural networks have shown remarkable success
 in areas where large amount of data is readily available,
 but they tend to under-perform when data is scarce. Recent
